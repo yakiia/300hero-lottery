@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>300英雄随机选择器</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css"
+    />
+    <style>
+      /* 基础重置 */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Segoe UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+      }
+
+      body {
+        background: linear-gradient(135deg, #23243a 0%, #1a1a2e 100%);
+        color: #f5f6fa;
+        min-height: 100vh;
+        padding: 24px;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 24px;
+      }
+
+      header {
+        text-align: center;
+        margin-bottom: 36px;
+        padding: 28px 16px 20px 16px;
+        background: rgba(40, 60, 120, 0.18);
+        border-radius: 18px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+      }
+
+      h1 {
+        font-size: 2.7rem;
+        margin-bottom: 10px;
+        background: linear-gradient(90deg, #4facfe 30%, #00f2fe 70%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        text-shadow: 0 2px 16px rgba(79, 172, 254, 0.25);
+        letter-spacing: 2px;
+      }
+
+      .subtitle {
+        color: #b0b0c0;
+        font-size: 1.15rem;
+        letter-spacing: 1px;
+      }
+
+      /* 抽奖区域样式 */
+      .lottery-area {
+        position: relative;
+        margin: 40px auto 0 auto;
+        max-width: 700px;
+        height: 240px;
+        background: linear-gradient(
+          120deg,
+          rgba(30, 30, 50, 0.95) 80%,
+          rgba(79, 172, 254, 0.08)
+        );
+        border-radius: 20px;
+        box-shadow: 0 12px 48px rgba(0, 0, 0, 0.45);
+        overflow: hidden;
+        border: 2.5px solid rgba(79, 172, 254, 0.13);
+        transition: box-shadow 0.3s;
+      }
+
+      .lottery-area.shine {
+        animation: shine 2.5s infinite;
+      }
+
+      .lottery-frame {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        border-radius: 20px;
+        border: 2.5px solid rgba(79, 172, 254, 0.18);
+        box-shadow: 0 0 0 4px rgba(79, 172, 254, 0.08) inset;
+      }
+
+      .lottery-scroll {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        transition: transform 0.12s cubic-bezier(0.4, 2, 0.6, 1);
+        z-index: 2;
+      }
+
+      .lottery-item {
+        width: 120px;
+        height: 128px;
+        margin: 18px 0;
+        border-radius: 14px;
+        overflow: hidden;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.32);
+        opacity: 0.7;
+        transform: scale(0.92);
+        transition: all 0.25s cubic-bezier(0.4, 2, 0.6, 1);
+        background: #23243a;
+        border: 2px solid transparent;
+      }
+
+      .lottery-item.active {
+        opacity: 1;
+        transform: scale(1.13) rotate(-2deg);
+        box-shadow: 0 0 32px 4px rgba(79, 172, 254, 0.38);
+        border: 2.5px solid #4facfe;
+        z-index: 3;
+      }
+
+      .lottery-item img {
+        width: 100%;
+        height: 128px;
+        object-fit: cover;
+        background: #222;
+      }
+
+      /* 控制区域 */
+      .controls {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: center;
+        gap: 28px;
+        margin: 36px 0 0 0;
+        padding: 22px 18px;
+        background: rgba(255, 255, 255, 0.07);
+        border-radius: 16px;
+        box-shadow: 0 2px 12px rgba(79, 172, 254, 0.08);
+      }
+
+      .count-selector {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      label {
+        font-weight: 600;
+        color: #e0e0f0;
+        font-size: 1.13rem;
+      }
+
+      input[type="number"] {
+        width: 90px;
+        padding: 13px 16px;
+        border: 2px solid rgba(79, 172, 254, 0.5);
+        border-radius: 9px;
+        font-size: 1.13rem;
+        background: rgba(30, 30, 50, 0.7);
+        color: #fff;
+        text-align: center;
+        transition: all 0.25s;
+        outline: none;
+      }
+
+      input[type="number"]:focus {
+        border-color: #4facfe;
+        box-shadow: 0 0 12px rgba(79, 172, 254, 0.38);
+      }
+
+      button {
+        background: linear-gradient(90deg, #4facfe 30%, #00f2fe 70%);
+        color: #fff;
+        border: none;
+        padding: 13px 32px;
+        border-radius: 9px;
+        font-size: 1.13rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.22s;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        box-shadow: 0 4px 18px rgba(79, 172, 254, 0.18);
+        letter-spacing: 1px;
+      }
+
+      button:hover:not(:disabled) {
+        transform: translateY(-2px) scale(1.04);
+        box-shadow: 0 8px 28px rgba(79, 172, 254, 0.28);
+        filter: brightness(1.08);
+      }
+
+      button:disabled {
+        background: linear-gradient(90deg, #666, #999);
+        cursor: not-allowed;
+        filter: grayscale(0.5);
+        box-shadow: none;
+      }
+
+      /* 结果区域 */
+      .results-title {
+        text-align: center;
+        margin: 48px 0 18px 0;
+        font-size: 1.55rem;
+        color: #4facfe;
+        letter-spacing: 1px;
+      }
+
+      .hero-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+        gap: 28px;
+        margin-top: 18px;
+        perspective: 1200px;
+      }
+
+      .hero-card {
+        background: linear-gradient(
+          120deg,
+          rgba(30, 30, 50, 0.93) 80%,
+          rgba(79, 172, 254, 0.09)
+        );
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.28);
+        transition: all 0.38s cubic-bezier(0.4, 2, 0.6, 1);
+        transform-style: preserve-3d;
+        opacity: 0;
+        transform: translateY(24px) rotateX(-10deg) scale(0.98);
+        border: 2px solid rgba(79, 172, 254, 0.13);
+      }
+
+      .hero-card.appear {
+        opacity: 1;
+        transform: translateY(0) rotateX(0) scale(1.04);
+        box-shadow: 0 12px 36px 2px rgba(79, 172, 254, 0.22);
+      }
+
+      .hero-card:hover {
+        transform: scale(1.07) rotateY(2deg);
+        box-shadow: 0 16px 48px 4px rgba(79, 172, 254, 0.32);
+        border-color: #4facfe;
+      }
+
+      .hero-avatar {
+        width: 100%;
+        height: 210px;
+        object-fit: cover;
+        border-bottom: 2.5px solid #4facfe;
+        background: #222;
+      }
+
+      .hero-name {
+        text-align: center;
+        padding: 16px 0;
+        font-weight: 700;
+        font-size: 1.13rem;
+        background: rgba(0, 0, 0, 0.18);
+        color: #fff;
+        letter-spacing: 1px;
+      }
+
+      /* 调试信息 */
+      .debug-info {
+        margin: 24px auto 0 auto;
+        padding: 16px 18px;
+        max-width: 700px;
+        background: rgba(0, 0, 0, 0.22);
+        border-radius: 11px;
+        font-size: 0.98rem;
+        color: #b0b0c0;
+        border: 1.5px solid rgba(255, 255, 255, 0.09);
+        box-shadow: 0 2px 8px rgba(79, 172, 254, 0.08);
+        word-break: break-all;
+      }
+
+      .error {
+        color: #ff6b6b;
+        font-weight: 600;
+      }
+
+      /* 动画效果 */
+      @keyframes pulse {
+        0% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.05);
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
+
+      .pulse {
+        animation: pulse 1s infinite;
+      }
+
+      @keyframes shine {
+        0% {
+          box-shadow: 0 0 12px rgba(79, 172, 254, 0.18);
+        }
+        50% {
+          box-shadow: 0 0 32px rgba(79, 172, 254, 0.32);
+        }
+        100% {
+          box-shadow: 0 0 12px rgba(79, 172, 254, 0.18);
+        }
+      }
+
+      .shine {
+        animation: shine 2.5s infinite;
+      }
+
+      /* 响应式设计 */
+      @media (max-width: 900px) {
+        .container {
+          padding: 8px;
+        }
+
+        .lottery-area {
+          max-width: 98vw;
+        }
+
+        .hero-grid {
+          grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        }
+
+        .hero-avatar {
+          height: 160px;
+        }
+      }
+      @media (max-width: 600px) {
+        h1 {
+          font-size: 1.5rem;
+        }
+
+        .lottery-area {
+          height: 150px;
+        }
+
+        .lottery-item {
+          width: 80px;
+          height: 110px;
+        }
+
+        .controls {
+          flex-direction: column;
+          gap: 18px;
+          padding: 14px 8px;
+        }
+
+        .hero-avatar {
+          height: 100px;
+        }
+
+        .hero-card {
+          border-radius: 10px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>300英雄抽奖选择器</h1>
+        <p class="subtitle">幸运抽奖，随机选出你的英雄</p>
+      </header>
+
+      <!-- 抽奖区域 -->
+      <div class="lottery-area shine">
+        <div class="lottery-scroll" id="lottery-scroll">
+          <!-- 抽奖项会动态添加到这里 -->
+        </div>
+        <div class="lottery-frame"></div>
+      </div>
+
+      <!-- 控制区域 -->
+      <div class="controls">
+        <div class="count-selector">
+          <label for="count">抽奖数量:</label>
+          <input type="number" id="count" min="1" max="10" value="1" />
+        </div>
+        <button id="randomize"><i class="fa fa-gift"></i> 开始抽奖</button>
+      </div>
+
+      <!-- 调试信息 -->
+      <div id="debug" class="debug-info"></div>
+
+      <!-- 结果区域 -->
+      <h2 class="results-title">抽奖结果</h2>
+      <div class="hero-grid" id="heroes"></div>
+    </div>
+
+    <script>
+      // 全局变量
+      let isDrawing = false;
+
+      // 获取DOM元素
+      const randomizeBtn = document.getElementById("randomize");
+      const countInput = document.getElementById("count");
+      const heroesContainer = document.getElementById("heroes");
+      const debugDiv = document.getElementById("debug");
+      const lotteryScroll = document.getElementById("lottery-scroll");
+
+      async function init() {
+        debugDiv.innerHTML = "系统准备就绪，可以开始抽奖了！";
+      }
+
+      // 开始抽奖
+      randomizeBtn.addEventListener("click", async () => {
+        if (isDrawing) return;
+
+        const count = parseInt(countInput.value);
+        if (isNaN(count) || count < 1 || count > 10) {
+          debugDiv.innerHTML = `<span class="error">请输入1到10之间的数字</span>`;
+          return;
+        }
+
+        try {
+          isDrawing = true;
+          randomizeBtn.disabled = true;
+          randomizeBtn.innerHTML =
+            '<i class="fa fa-spinner fa-spin"></i> 抽奖中...';
+          debugDiv.innerHTML = "正在准备抽奖...";
+          heroesContainer.innerHTML = "";
+
+          // 本地抽奖
+          const heroesData = getRandomHeroes(count);
+          await startLotteryAnimation(heroesData);
+        } catch (err) {
+          debugDiv.innerHTML = `<span class="error">抽奖失败: ${err.message}</span>`;
+        } finally {
+          isDrawing = false;
+          randomizeBtn.disabled = false;
+          randomizeBtn.innerHTML = '<i class="fa fa-gift"></i> 开始抽奖';
+        }
+      });
+
+      // 抽奖动画
+      async function startLotteryAnimation(heroesData) {
+        async function singleDraw(hero) {
+          return new Promise((resolve) => {
+            const visibleItems = 3;
+            const itemHeight = 128;
+            const itemMargin = 18;
+            const itemHeightWithMargin = itemHeight + itemMargin * 2;
+
+            // 让滚动更有“转盘感”，重复多圈
+            const repeatCount = 1; // 滚动8圈
+            const scrollItems = [];
+            for (let i = 0; i < repeatCount; i++) {
+              scrollItems.push(...shuffledHeroes);
+            }
+            // 最后一圈中间插入目标
+            scrollItems.push(hero);
+
+            const totalItems = scrollItems.length;
+
+            lotteryScroll.innerHTML = "";
+            scrollItems.forEach((h) => {
+              const item = document.createElement("div");
+              item.className = "lottery-item";
+              item.innerHTML = `<img src="${h.avatar}" alt="${h.name}" onerror="this.src='https://via.placeholder.com/150?text=无头像'">`;
+              lotteryScroll.appendChild(item);
+            });
+
+            // 目标头像在最后一个
+            const realTargetIndex = scrollItems.length - 1;
+
+            // 动画参数
+            let steps = 0;
+            let speed = 10;
+            let phase = "fast";
+            const fastSteps = totalItems - 18; // 前面快速滚动
+            const slowSteps = 18; // 最后慢慢减速
+
+            function animate() {
+              let currentIndex;
+              if (phase === "fast") {
+                currentIndex = steps;
+                speed = Math.min(speed * 1.12, 5); // 初始加速更快，最大速度更快
+                if (steps >= fastSteps) {
+                  steps = fastSteps;
+                  phase = "slow";
+                }
+              } else {
+                currentIndex = steps;
+                speed = Math.max(speed * 1.08, 100); // 慢速阶段减速更快，最低100ms
+              }
+              lotteryScroll.style.transform = `translateY(-${
+                currentIndex * itemHeightWithMargin
+              }px)`;
+
+              document
+                .querySelectorAll(".lottery-item")
+                .forEach((item, idx) => {
+                  item.classList.toggle("active", idx === currentIndex);
+                });
+
+              steps++;
+              if (currentIndex < realTargetIndex) {
+                setTimeout(animate, speed);
+              } else {
+                // 居中
+                const containerHeight =
+                  document.querySelector(".lottery-area").offsetHeight;
+                const targetOffset =
+                  (containerHeight - itemHeightWithMargin) / 2;
+                const finalTranslateY =
+                  realTargetIndex * itemHeightWithMargin - targetOffset;
+
+                lotteryScroll.style.transition =
+                  "transform 0.3s cubic-bezier(0.4,2,0.6,1)";
+                lotteryScroll.style.transform = `translateY(-${finalTranslateY}px)`;
+
+                document
+                  .querySelectorAll(".lottery-item")
+                  .forEach((item, idx) => {
+                    item.classList.toggle("active", idx === realTargetIndex);
+                  });
+
+                setTimeout(() => {
+                  lotteryScroll.style.transition = "";
+                  displayOneResult(hero);
+                  resolve();
+                }, 350);
+              }
+            }
+
+            animate();
+          });
+        }
+
+        // 逐个抽取并显示
+        for (let i = 0; i < heroesData.length; i++) {
+          await singleDraw(heroesData[i]);
+          await new Promise((r) => setTimeout(r, 800));
+        }
+      }
+
+      // 单独显示一个结果
+      function displayOneResult(hero) {
+        const card = document.createElement("div");
+        card.className = "hero-card";
+        card.innerHTML = `
+    <img src="${hero.avatar}" alt="${hero.name}" class="hero-avatar" onerror="this.src='https://via.placeholder.com/150?text=无头像'">
+    <div class="hero-name">${hero.name}</div>
+  `;
+        heroesContainer.appendChild(card);
+        setTimeout(() => {
+          card.classList.add("appear");
+        }, 50);
+      }
+
+      // 初始化
+      window.addEventListener("load", init);
+
+      let shuffledHeroes = [];
+      function getRandomHeroes(count) {
+        shuffledHeroes = [...allHeroes].sort(() => 0.5 - Math.random());
+        return shuffledHeroes.slice(0, count);
+      }
+    </script>
+    <script>
+      allHeroes = [
+        { name: "法尼·瓦伦泰", avatar: "/local_page_files/chara_0328.dds.bmp" },
+        { name: "刑天", avatar: "/local_page_files/chara_0327.dds.bmp" },
+        { name: "奴良陆生", avatar: "/local_page_files/chara_0323.dds.bmp" },
+        { name: "蓝染惣右介", avatar: "/local_page_files/chara_0322.dds.bmp" },
+        {
+          name: "比那名居天子",
+          avatar: "/local_page_files/chara_0321.dds.bmp",
+        },
+        { name: "阿希娅", avatar: "/local_page_files/chara_0320.dds.bmp" },
+        { name: "坂本", avatar: "/local_page_files/chara_0319.dds.bmp" },
+        { name: "吕小鱼", avatar: "/local_page_files/chara_0318.dds.bmp" },
+        { name: "吕树", avatar: "/local_page_files/chara_0317.dds.bmp" },
+        { name: "东风谷早苗", avatar: "/local_page_files/chara_0316.dds.bmp" },
+        { name: "亚连·沃克", avatar: "/local_page_files/chara_0315.dds.bmp" },
+        { name: "芙蕾雅", avatar: "/local_page_files/chara_0314.dds.bmp" },
+        { name: "苍星石", avatar: "/local_page_files/chara_0313.dds.bmp" },
+        { name: "石神千空", avatar: "/local_page_files/chara_0312.dds.bmp" },
+        { name: "琪露诺", avatar: "/local_page_files/chara_0311.dds.bmp" },
+        { name: "蕾姆", avatar: "/local_page_files/chara_0310.dds.bmp" },
+        { name: "木更", avatar: "/local_page_files/chara_0308.dds.bmp" },
+        { name: "空条徐伦", avatar: "/local_page_files/chara_0307.dds.bmp" },
+        { name: "电次", avatar: "/local_page_files/chara_0306.dds.bmp" },
+        { name: "温蒂", avatar: "/local_page_files/chara_0305.dds.bmp" },
+        { name: "茵蒂克丝", avatar: "/local_page_files/chara_0304.dds.bmp" },
+        { name: "菈菈", avatar: "/local_page_files/chara_0303.dds.bmp" },
+        { name: "风鸣翼", avatar: "/local_page_files/chara_0302.dds.bmp" },
+        { name: "北方酱", avatar: "/local_page_files/chara_0301.dds.bmp" },
+        { name: "凯菈", avatar: "/local_page_files/chara_0300.dds.bmp" },
+        { name: "夏提雅", avatar: "/local_page_files/chara_0296.dds.bmp" },
+        {
+          name: "古明地觉&古明地恋",
+          avatar: "/local_page_files/chara_0295.dds.bmp",
+        },
+        { name: "逢坂大河", avatar: "/local_page_files/chara_0294.dds.bmp" },
+        { name: "红美铃", avatar: "/local_page_files/chara_0293.dds.bmp" },
+        { name: "木之本樱", avatar: "/local_page_files/chara_0292.dds.bmp" },
+        { name: "结城友奈", avatar: "/local_page_files/chara_0261.dds.bmp" },
+        { name: "申屠子夜", avatar: "/local_page_files/chara_0290.dds.bmp" },
+        { name: "莉姆", avatar: "/local_page_files/chara_0289.dds.bmp" },
+        { name: "闻人翊悬", avatar: "/local_page_files/chara_0288.dds.bmp" },
+        { name: "赛贝丝", avatar: "/local_page_files/chara_0287.dds.bmp" },
+        { name: "食蜂操祈", avatar: "/local_page_files/chara_0286.dds.bmp" },
+        { name: "吉良吉影", avatar: "/local_page_files/chara_0285.dds.bmp" },
+        { name: "托尔", avatar: "/local_page_files/chara_0284.dds.bmp" },
+        {
+          name: "帕秋莉·诺蕾姬",
+          avatar: "/local_page_files/chara_0283.dds.bmp",
+        },
+        { name: "和真&惠惠", avatar: "/local_page_files/chara_0282.dds.bmp" },
+        { name: "藤原妹红", avatar: "/local_page_files/chara_0281.dds.bmp" },
+        { name: "王也", avatar: "/local_page_files/chara_0280.dds.bmp" },
+        { name: "涂山红红", avatar: "/local_page_files/chara_0279.dds.bmp" },
+        { name: "C.C.", avatar: "/local_page_files/chara_0278.dds.bmp" },
+        { name: "梅普露", avatar: "/local_page_files/chara_0272.dds.bmp" },
+        { name: "蓬莱山辉夜", avatar: "/local_page_files/chara_0275.dds.bmp" },
+        { name: "蝴蝶忍", avatar: "/local_page_files/chara_0274.dds.bmp" },
+        {
+          name: "机械神梅普露",
+          avatar: "/local_page_files/chara_0273.dds.bmp",
+        },
+        { name: "环彩羽", avatar: "/local_page_files/chara_0271.dds.bmp" },
+        { name: "迪奥·布兰度", avatar: "/local_page_files/chara_0270.dds.bmp" },
+        { name: "尤吉欧", avatar: "/local_page_files/chara_0269.dds.bmp" },
+        { name: "射命丸文", avatar: "/local_page_files/chara_0268.dds.bmp" },
+        { name: "灶门炭治郎", avatar: "/local_page_files/chara_0267.dds.bmp" },
+        { name: "冯宝宝", avatar: "/local_page_files/chara_0266.dds.bmp" },
+        { name: "格蕾", avatar: "/local_page_files/chara_0265.dds.bmp" },
+        { name: "美游", avatar: "/local_page_files/chara_0264.dds.bmp" },
+        { name: "真红", avatar: "/local_page_files/chara_0263.dds.bmp" },
+        {
+          name: "爱丽丝·玛格特罗依德",
+          avatar: "/local_page_files/chara_0262.dds.bmp",
+        },
+        { name: "莉法", avatar: "/local_page_files/chara_0260.dds.bmp" },
+        { name: "波风水门", avatar: "/local_page_files/chara_0258.dds.bmp" },
+        { name: "妮姆芙", avatar: "/local_page_files/chara_0257.dds.bmp" },
+        { name: "埼玉", avatar: "/local_page_files/chara_0256.dds.bmp" },
+        {
+          name: "乔鲁诺·乔巴纳",
+          avatar: "/local_page_files/chara_0255.dds.bmp",
+        },
+        { name: "间桐樱", avatar: "/local_page_files/chara_0254.dds.bmp" },
+        { name: "美杜莎", avatar: "/local_page_files/chara_0253.dds.bmp" },
+        { name: "蕾西亚", avatar: "/local_page_files/chara_0251.dds.bmp" },
+        { name: "伍六七", avatar: "/local_page_files/chara_0250.dds.bmp" },
+        { name: "爱丽丝", avatar: "/local_page_files/chara_0249.dds.bmp" },
+        { name: "琉璃", avatar: "/local_page_files/chara_0248.dds.bmp" },
+        { name: "迪斯卓尔", avatar: "/local_page_files/chara_0247.dds.bmp" },
+        { name: "少司命", avatar: "/local_page_files/chara_0246.dds.bmp" },
+        { name: "曹焱兵", avatar: "/local_page_files/chara_0245.dds.bmp" },
+        { name: "常宣灵", avatar: "/local_page_files/chara_0244.dds.bmp" },
+        { name: "常昊灵", avatar: "/local_page_files/chara_0243.dds.bmp" },
+        { name: "潘多拉", avatar: "/local_page_files/chara_0242.dds.bmp" },
+        { name: "我妻由乃", avatar: "/local_page_files/chara_0241.dds.bmp" },
+        {
+          name: "西行寺幽幽子",
+          avatar: "/local_page_files/chara_0240.dds.bmp",
+        },
+        { name: "夜斗", avatar: "/local_page_files/chara_0239.dds.bmp" },
+        { name: "爱蜜莉雅", avatar: "/local_page_files/chara_0238.dds.bmp" },
+        { name: "雅儿贝德", avatar: "/local_page_files/chara_0237.dds.bmp" },
+        { name: "佩姬", avatar: "/local_page_files/chara_0236.dds.bmp" },
+        { name: "神裂火织", avatar: "/local_page_files/chara_0235.dds.bmp" },
+        { name: "康娜", avatar: "/local_page_files/chara_0234.dds.bmp" },
+        { name: "珂朵莉", avatar: "/local_page_files/chara_0233.dds.bmp" },
+        { name: "阿尔泰尔", avatar: "/local_page_files/chara_0232.dds.bmp" },
+        { name: "阿库娅", avatar: "/local_page_files/chara_0231.dds.bmp" },
+        { name: "芙兰朵露", avatar: "/local_page_files/chara_0230.dds.bmp" },
+        { name: "安兹乌尔恭", avatar: "/local_page_files/chara_0229.dds.bmp" },
+        { name: "塞巴斯蒂安", avatar: "/local_page_files/chara_0228.dds.bmp" },
+        { name: "小一", avatar: "/local_page_files/chara_0227.dds.bmp" },
+        { name: "库·丘林", avatar: "/local_page_files/chara_0226.dds.bmp" },
+        { name: "夜雨声烦", avatar: "/local_page_files/chara_0225.dds.bmp" },
+        { name: "君莫笑", avatar: "/local_page_files/chara_0224.dds.bmp" },
+        { name: "三千院凪", avatar: "/local_page_files/chara_0223.dds.bmp" },
+        { name: "玉藻前", avatar: "/local_page_files/chara_0222.dds.bmp" },
+        { name: "黑贞德", avatar: "/local_page_files/chara_0221.dds.bmp" },
+        { name: "贞德", avatar: "/local_page_files/chara_0220.dds.bmp" },
+        { name: "雾雨魔理沙", avatar: "/local_page_files/chara_0218.dds.bmp" },
+        { name: "阿斯托尔福", avatar: "/local_page_files/chara_0217.dds.bmp" },
+        { name: "空", avatar: "/local_page_files/chara_0216.dds.bmp" },
+        { name: "白", avatar: "/local_page_files/chara_0215.dds.bmp" },
+        { name: "香风智乃", avatar: "/local_page_files/chara_0214.dds.bmp" },
+        { name: "鲁路修", avatar: "/local_page_files/chara_0213.dds.bmp" },
+        { name: "赤瞳", avatar: "/local_page_files/chara_0212.dds.bmp" },
+        { name: "艾露莎", avatar: "/local_page_files/chara_0211.dds.bmp" },
+        { name: "赵云", avatar: "/local_page_files/chara_0210.dds.bmp" },
+        { name: "司波达也", avatar: "/local_page_files/chara_0209.dds.bmp" },
+        { name: "八神疾风", avatar: "/local_page_files/chara_0208.dds.bmp" },
+        { name: "蕾米莉亚", avatar: "/local_page_files/chara_0207.dds.bmp" },
+        { name: "月刊重巡", avatar: "/local_page_files/chara_0206.dds.bmp" },
+        { name: "无名", avatar: "/local_page_files/chara_0205.dds.bmp" },
+        { name: "法老王", avatar: "/local_page_files/chara_0204.dds.bmp" },
+        { name: "爱德华", avatar: "/local_page_files/chara_0203.dds.bmp" },
+        { name: "周防尊", avatar: "/local_page_files/chara_0202.dds.bmp" },
+        { name: "水银灯", avatar: "/local_page_files/chara_0201.dds.bmp" },
+        { name: "洛克李", avatar: "/local_page_files/chara_0200.dds.bmp" },
+        { name: "优克莉伍德", avatar: "/local_page_files/chara_0199.dds.bmp" },
+        { name: "伊斯坎达尔", avatar: "/local_page_files/chara_0198.dds.bmp" },
+        { name: "缇米", avatar: "/local_page_files/chara_0197.dds.bmp" },
+        { name: "柏崎星奈", avatar: "/local_page_files/chara_0196.dds.bmp" },
+        { name: "梦原望", avatar: "/local_page_files/chara_0195.dds.bmp" },
+        { name: "栗山未来", avatar: "/local_page_files/chara_0194.dds.bmp" },
+        { name: "伊莎", avatar: "/local_page_files/chara_0193.dds.bmp" },
+        { name: "牧濑红莉栖", avatar: "/local_page_files/chara_0192.dds.bmp" },
+        { name: "一方通行", avatar: "/local_page_files/chara_0191.dds.bmp" },
+        { name: "蒂塔", avatar: "/local_page_files/chara_0190.dds.bmp" },
+        { name: "歌姬", avatar: "/local_page_files/chara_0189.dds.bmp" },
+        { name: "魂魄妖梦", avatar: "/local_page_files/chara_0188.dds.bmp" },
+        { name: "克子", avatar: "/local_page_files/chara_0186.dds.bmp" },
+        { name: "诺瓦露", avatar: "/local_page_files/chara_0185.dds.bmp" },
+        { name: "亚里亚", avatar: "/local_page_files/chara_0184.dds.bmp" },
+        { name: "大傻", avatar: "/local_page_files/chara_0183.dds.bmp" },
+        { name: "巴麻美", avatar: "/local_page_files/chara_0181.dds.bmp" },
+        { name: "尼禄", avatar: "/local_page_files/chara_0180.dds.bmp" },
+        { name: "天使", avatar: "/local_page_files/chara_0174.dds.bmp" },
+        { name: "隐居者", avatar: "/local_page_files/chara_0172.dds.bmp" },
+        { name: "独眼之王", avatar: "/local_page_files/chara_0171.dds.bmp" },
+        { name: "炎魔", avatar: "/local_page_files/chara_0170.dds.bmp" },
+        { name: "菲特", avatar: "/local_page_files/chara_0169.dds.bmp" },
+        { name: "伊莉雅", avatar: "/local_page_files/chara_0168.dds.bmp" },
+        { name: "冰之狙击手", avatar: "/local_page_files/chara_0167.dds.bmp" },
+        { name: "佐仓杏子", avatar: "/local_page_files/chara_0166.dds.bmp" },
+        { name: "高町奈叶", avatar: "/local_page_files/chara_0165.dds.bmp" },
+        { name: "黑雪姬", avatar: "/local_page_files/chara_0164.dds.bmp" },
+        { name: "空条承太郎", avatar: "/local_page_files/chara_0163.dds.bmp" },
+        { name: "美树沙耶加", avatar: "/local_page_files/chara_0162.dds.bmp" },
+        { name: "奇犽", avatar: "/local_page_files/chara_0161.dds.bmp" },
+        { name: "远坂凛", avatar: "/local_page_files/chara_0160.dds.bmp" },
+        { name: "龙教练", avatar: "/local_page_files/chara_0159.dds.bmp" },
+        { name: "喔", avatar: "/local_page_files/chara_0158.dds.bmp" },
+        { name: "五更琉璃", avatar: "/local_page_files/chara_0157.dds.bmp" },
+        { name: "卫宫", avatar: "/local_page_files/chara_0156.dds.bmp" },
+        { name: "两仪式", avatar: "/local_page_files/chara_0155.dds.bmp" },
+        { name: "立华奏", avatar: "/local_page_files/chara_0154.dds.bmp" },
+        { name: "白岩射手", avatar: "/local_page_files/chara_0153.dds.bmp" },
+        { name: "奈亚子", avatar: "/local_page_files/chara_0152.dds.bmp" },
+        { name: "八云紫", avatar: "/local_page_files/chara_0151.dds.bmp" },
+        { name: "鹿目圆香", avatar: "/local_page_files/chara_0150.dds.bmp" },
+        { name: "梦梦", avatar: "/local_page_files/chara_0149.dds.bmp" },
+        { name: "樱满集", avatar: "/local_page_files/chara_0148.dds.bmp" },
+        { name: "白井黑子", avatar: "/local_page_files/chara_0147.dds.bmp" },
+        { name: "涅普顿", avatar: "/local_page_files/chara_0146.dds.bmp" },
+        { name: "纏流子", avatar: "/local_page_files/chara_0145.dds.bmp" },
+        { name: "金色之暗", avatar: "/local_page_files/chara_0144.dds.bmp" },
+        { name: "晓美焰", avatar: "/local_page_files/chara_0143.dds.bmp" },
+        { name: "公主", avatar: "/local_page_files/chara_0142.dds.bmp" },
+        { name: "小鸟游六花", avatar: "/local_page_files/chara_0140.dds.bmp" },
+        { name: "万年小学生", avatar: "/local_page_files/chara_0139.dds.bmp" },
+        { name: "伊卡洛斯", avatar: "/local_page_files/chara_0138.dds.bmp" },
+        { name: "坂田银时", avatar: "/local_page_files/chara_0137.dds.bmp" },
+        { name: "夜夜", avatar: "/local_page_files/chara_0136.dds.bmp" },
+        { name: "十六夜咲夜", avatar: "/local_page_files/chara_0135.dds.bmp" },
+        { name: "梦魇", avatar: "/local_page_files/chara_0134.dds.bmp" },
+        { name: "喜羊羊", avatar: "/local_page_files/chara_0128.dds.bmp" },
+        { name: "真田幸村", avatar: "/local_page_files/chara_0126.dds.bmp" },
+        { name: "强袭自由", avatar: "/local_page_files/chara_0122.dds.bmp" },
+        { name: "绯村剑心", avatar: "/local_page_files/chara_0121.dds.bmp" },
+        { name: "姬丝秀忒", avatar: "/local_page_files/chara_0120.dds.bmp" },
+        { name: "李小狼", avatar: "/local_page_files/chara_0119.dds.bmp" },
+        { name: "黑", avatar: "/local_page_files/chara_0118.dds.bmp" },
+        { name: "桂木桂马", avatar: "/local_page_files/chara_0117.dds.bmp" },
+        { name: "贵公子", avatar: "/local_page_files/chara_0115.dds.bmp" },
+        { name: "片翼天使", avatar: "/local_page_files/chara_0113.dds.bmp" },
+        { name: "小悟空", avatar: "/local_page_files/chara_0112.dds.bmp" },
+        { name: "格雷", avatar: "/local_page_files/chara_0110.dds.bmp" },
+        { name: "夏娜", avatar: "/local_page_files/chara_0109.dds.bmp" },
+        { name: "楪祈", avatar: "/local_page_files/chara_0108.dds.bmp" },
+        { name: "笠笠笠", avatar: "/local_page_files/chara_0107.dds.bmp" },
+        { name: "秋山澪", avatar: "/local_page_files/chara_0105.dds.bmp" },
+        { name: "吉尔伽美什", avatar: "/local_page_files/chara_0104.dds.bmp" },
+        { name: "黑衣剑士", avatar: "/local_page_files/chara_0102.dds.bmp" },
+        { name: "黑岩射手", avatar: "/local_page_files/chara_0101.dds.bmp" },
+        { name: "博丽灵梦", avatar: "/local_page_files/chara_0100.dds.bmp" },
+        { name: "御坂美琴", avatar: "/local_page_files/chara_0096.dds.bmp" },
+        { name: "四方川菖蒲", avatar: "/local_page_files/chara_0094.dds.bmp" },
+        { name: "达克尼斯", avatar: "/local_page_files/chara_0093.dds.bmp" },
+        { name: "无头骑士", avatar: "/local_page_files/chara_0092.dds.bmp" },
+        {
+          name: "天草四郎时贞",
+          avatar: "/local_page_files/chara_0091.dds.bmp",
+        },
+        { name: "美狄亚", avatar: "/local_page_files/chara_0090.dds.bmp" },
+        { name: "幻刺·L·莉莉", avatar: "/local_page_files/chara_0087.dds.bmp" },
+        { name: "死神", avatar: "/local_page_files/chara_0086.dds.bmp" },
+        { name: "佐罗", avatar: "/local_page_files/chara_0085.dds.bmp" },
+        { name: "战士娃", avatar: "/local_page_files/chara_0084.dds.bmp" },
+        { name: "猎人娃", avatar: "/local_page_files/chara_0083.dds.bmp" },
+        { name: "牧师娃", avatar: "/local_page_files/chara_0082.dds.bmp" },
+        { name: "骑士娃", avatar: "/local_page_files/chara_0081.dds.bmp" },
+        { name: "术士娃", avatar: "/local_page_files/chara_0080.dds.bmp" },
+        { name: "法师娃", avatar: "/local_page_files/chara_0079.dds.bmp" },
+        { name: "盗贼娃", avatar: "/local_page_files/chara_0078.dds.bmp" },
+        { name: "狂暴补师", avatar: "/local_page_files/chara_0076.dds.bmp" },
+        { name: "纳兹", avatar: "/local_page_files/chara_0075.dds.bmp" },
+        { name: "卡殿下", avatar: "/local_page_files/chara_0072.dds.bmp" },
+        { name: "胡子船长", avatar: "/local_page_files/chara_0071.dds.bmp" },
+        { name: "青丘国主", avatar: "/local_page_files/chara_0070.dds.bmp" },
+        { name: "左二少", avatar: "/local_page_files/chara_0069.dds.bmp" },
+        { name: "火拳·S", avatar: "/local_page_files/chara_0067.dds.bmp" },
+        { name: "蛇血舞姬", avatar: "/local_page_files/chara_0066.dds.bmp" },
+        { name: "蛇叔", avatar: "/local_page_files/chara_0065.dds.bmp" },
+        {
+          name: "白鬼院凛凛蝶",
+          avatar: "/local_page_files/chara_0064.dds.bmp",
+        },
+        { name: "梅比斯", avatar: "/local_page_files/chara_0063.dds.bmp" },
+        { name: "摩尔迦娜", avatar: "/local_page_files/chara_0062.dds.bmp" },
+        { name: "貂蝉", avatar: "/local_page_files/chara_0061.dds.bmp" },
+        { name: "立花响", avatar: "/local_page_files/chara_0060.dds.bmp" },
+        { name: "神目黑刀", avatar: "/local_page_files/chara_0058.dds.bmp" },
+        { name: "乔帮主", avatar: "/local_page_files/chara_0057.dds.bmp" },
+        { name: "巴依老爷", avatar: "/local_page_files/chara_0056.dds.bmp" },
+        { name: "雅典娜", avatar: "/local_page_files/chara_0055.dds.bmp" },
+        { name: "神乐", avatar: "/local_page_files/chara_0054.dds.bmp" },
+        { name: "亚瑟王", avatar: "/local_page_files/chara_0053.dds.bmp" },
+        { name: "我受罗", avatar: "/local_page_files/chara_0052.dds.bmp" },
+        { name: "匹诺曹", avatar: "/local_page_files/chara_0051.dds.bmp" },
+        { name: "黑羽快斗", avatar: "/local_page_files/chara_0050.dds.bmp" },
+        { name: "草帽小子", avatar: "/local_page_files/chara_0048.dds.bmp" },
+        { name: "七宫智音", avatar: "/local_page_files/chara_0047.dds.bmp" },
+        { name: "莉娜·因巴斯", avatar: "/local_page_files/chara_0046.dds.bmp" },
+        { name: "浅间·智", avatar: "/local_page_files/chara_0045.dds.bmp" },
+        { name: "弗兰肯斯坦", avatar: "/local_page_files/chara_0043.dds.bmp" },
+        { name: "缇娜", avatar: "/local_page_files/chara_0042.dds.bmp" },
+        { name: "赫拉克勒斯", avatar: "/local_page_files/chara_0041.dds.bmp" },
+        { name: "战场原黑仪", avatar: "/local_page_files/chara_0040.dds.bmp" },
+        { name: "土间埋", avatar: "/local_page_files/chara_0039.dds.bmp" },
+        { name: "风音日和", avatar: "/local_page_files/chara_0038.dds.bmp" },
+        { name: "司波深雪", avatar: "/local_page_files/chara_0037.dds.bmp" },
+        { name: "富樫勇太", avatar: "/local_page_files/chara_0036.dds.bmp" },
+        { name: "圣大人", avatar: "/local_page_files/chara_0035.dds.bmp" },
+        { name: "雪菜", avatar: "/local_page_files/chara_0034.dds.bmp" },
+        { name: "凸守早苗", avatar: "/local_page_files/chara_0033.dds.bmp" },
+        { name: "本多二代", avatar: "/local_page_files/chara_0032.dds.bmp" },
+        { name: "天天", avatar: "/local_page_files/chara_0031.dds.bmp" },
+        { name: "哈桑", avatar: "/local_page_files/chara_0030.dds.bmp" },
+        { name: "沙耶", avatar: "/local_page_files/chara_0029.dds.bmp" },
+        { name: "齐天小剩", avatar: "/local_page_files/chara_0023.dds.bmp" },
+        { name: "阿尔冯斯", avatar: "/local_page_files/chara_0020.dds.bmp" },
+        { name: "平和岛静雄", avatar: "/local_page_files/chara_0017.dds.bmp" },
+        { name: "天道佩恩", avatar: "/local_page_files/chara_0013.dds.bmp" },
+      ];
+    </script>
+  </body>
+</html>
