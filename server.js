@@ -2,7 +2,7 @@ const express = require("express");
 const fs = require("fs");
 const path = require("path");
 const app = express();
-const port = 3000;
+const PORT = process.env.PORT || 3000;
 
 // 允许跨域请求
 app.use((req, res, next) => {
@@ -58,7 +58,6 @@ app.get("/api/all", (req, res) => {
   res.json(heroesData);
 });
 
-// 启动服务器
-app.listen(port, () => {
-  console.log(`服务器已启动，访问 http://localhost:${port}`);
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`Server ready on port ${PORT}`);
 });
